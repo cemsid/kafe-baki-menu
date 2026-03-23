@@ -1,1 +1,305 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bakı Ləzzət</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root { --bg:#0f0e0c; --surface:#1a1814; --card:#221f1a; --border:#2e2a22; --gold:#c9a84c; --gold2:#e8c96a; --text:#f0ead8; --muted:#8a8070; --accent:#d4582a; --radius:14px; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+  .page { display:none; } .page.active { display:block; }
+  #menu { min-height:100vh; }
+  .menu-header { position:sticky; top:0; z-index:100; background:rgba(15,14,12,0.95); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); }
+  .menu-top { display:flex; align-items:center; gap:12px; padding:14px 16px 0; }
+  .menu-logo { width:40px; height:40px; border-radius:50%; object-fit:cover; background:var(--border); }
+  .menu-title { flex:1; }
+  .menu-title h2 { font-family:'Playfair Display',serif; font-size:1.15rem; color:var(--gold); }
+  .menu-title p { font-size:0.75rem; color:var(--muted); }
+  .admin-link-btn { background:none; border:1px solid var(--border); color:var(--muted); padding:6px 12px; border-radius:50px; cursor:pointer; font-size:0.75rem; }
+  .cat-tabs { display:flex; gap:8px; padding:10px 16px; overflow-x:auto; scrollbar-width:none; }
+  .cat-tabs::-webkit-scrollbar { display:none; }
+  .cat-tab { flex-shrink:0; padding:7px 18px; border-radius:50px; font-size:0.85rem; border:1px solid var(--border); background:none; color:var(--muted); cursor:pointer; transition:all .2s; }
+  .cat-tab.active { background:var(--gold); color:#000; border-color:var(--gold); font-weight:600; }
+  .menu-items { padding:16px; max-width:700px; margin:0 auto; }
+  .cat-section { margin-bottom:32px; }
+  .cat-section h3 { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--gold); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .item-card { display:flex; gap:14px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:10px; }
+  .item-img { width:80px; height:80px; border-radius:10px; background:var(--surface); flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--border); font-size:1.8rem; overflow:hidden; }
+  .item-img img { width:100%; height:100%; object-fit:cover; border-radius:10px; }
+  .item-info { flex:1; }
+  .item-name { font-weight:600; font-size:1rem; color:var(--text); margin-bottom:4px; }
+  .item-desc { font-size:0.82rem; color:var(--muted); margin-bottom:8px; line-height:1.4; }
+  .item-footer { display:flex; align-items:center; justify-content:space-between; }
+  .item-price { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--gold); font-weight:600; }
+  .badge { font-size:0.7rem; padding:2px 8px; border-radius:50px; font-weight:600; }
+  .badge-new { background:#1a3320; color:#4caf7a; }
+  .badge-pop { background:#2d1a0e; color:var(--accent); }
+  #admin { min-height:100vh; background:var(--bg); }
+  .admin-header { background:var(--surface); border-bottom:1px solid var(--border); padding:16px 20px; display:flex; align-items:center; gap:12px; }
+  .admin-header h2 { font-family:'Playfair Display',serif; color:var(--gold); flex:1; }
+  .back-btn { background:none; border:1px solid var(--border); color:var(--text); padding:6px 14px; border-radius:50px; cursor:pointer; font-size:0.85rem; }
+  .logout-btn { background:none; border:1px solid var(--border); color:var(--muted); padding:6px 14px; border-radius:50px; cursor:pointer; font-size:0.8rem; }
+  .admin-body { max-width:700px; margin:0 auto; padding:20px; }
+  .admin-section { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:20px; }
+  .admin-section h3 { font-family:'Playfair Display',serif; color:var(--gold); margin-bottom:16px; font-size:1rem; }
+  .form-group { margin-bottom:14px; }
+  label { display:block; font-size:0.82rem; color:var(--muted); margin-bottom:5px; }
+  input, textarea, select { width:100%; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:10px 14px; border-radius:10px; font-size:0.9rem; font-family:'DM Sans',sans-serif; outline:none; transition:border-color .2s; }
+  input:focus, textarea:focus, select:focus { border-color:var(--gold); }
+  textarea { resize:vertical; min-height:70px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .checkbox-row { display:flex; gap:16px; align-items:center; }
+  .checkbox-row label { display:flex; align-items:center; gap:6px; cursor:pointer; margin:0; color:var(--text); }
+  .checkbox-row input[type=checkbox] { width:auto; }
+  .btn { padding:11px 24px; border-radius:10px; font-size:0.9rem; font-weight:600; cursor:pointer; border:none; transition:all .2s; }
+  .btn-primary { background:var(--gold); color:#000; }
+  .btn-primary:hover { background:var(--gold2); }
+  .btn-danger { background:#3a1515; color:#e07070; border:1px solid #5a2020; }
+  .btn-sm { padding:6px 14px; font-size:0.8rem; }
+  .items-list { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .admin-item { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px; }
+  .admin-item-info { flex:1; }
+  .admin-item-info strong { font-size:0.9rem; color:var(--text); display:block; }
+  .admin-item-info span { font-size:0.78rem; color:var(--muted); }
+  .cats-list { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .cat-chip { background:var(--surface); border:1px solid var(--border); border-radius:50px; padding:5px 14px; font-size:0.82rem; display:flex; align-items:center; gap:8px; }
+  .cat-chip button { background:none; border:none; color:var(--muted); cursor:pointer; font-size:1rem; }
+  .img-preview { width:80px; height:80px; border-radius:10px; object-fit:cover; margin-top:8px; display:none; }
+  .msg { padding:10px 14px; border-radius:10px; font-size:0.85rem; margin-top:10px; display:none; }
+  .msg.success { background:#0e2418; color:#4caf7a; border:1px solid #1e4a30; }
+  .msg.error { background:#2a0e0e; color:#e07070; border:1px solid #4a1e1e; }
+  .modal-overlay { position:fixed; inset:0; background:#000a; z-index:200; display:none; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:28px; width:90%; max-width:380px; }
+  .modal h3 { font-family:'Playfair Display',serif; color:var(--gold); margin-bottom:16px; }
+  .modal input { margin-bottom:12px; }
+  .loading { text-align:center; padding:60px 20px; color:var(--muted); }
+  .empty { text-align:center; padding:40px 20px; color:var(--muted); font-size:0.9rem; }
+</style>
+</head>
+<body>
 
+<div id="menu" class="page active">
+  <div class="menu-header">
+    <div class="menu-top">
+      <div id="menuLogoWrap"></div>
+      <div class="menu-title">
+        <h2 id="menuName">—</h2>
+        <p id="menuAddress">—</p>
+      </div>
+      <button class="admin-link-btn" onclick="openLoginModal()">⚙ Admin</button>
+    </div>
+    <div class="cat-tabs" id="catTabs"></div>
+  </div>
+  <div class="menu-items" id="menuItems"><div class="loading">Yüklənir...</div></div>
+</div>
+
+<div id="admin" class="page">
+  <div class="admin-header">
+    <button class="back-btn" onclick="goMenu()">← Menyuya Qayıt</button>
+    <h2 id="adminTitle">Admin Panel</h2>
+    <button class="logout-btn" onclick="goMenu()">Çıxış</button>
+  </div>
+  <div class="admin-body">
+    <div class="admin-section">
+      <h3>🏪 Restoran Məlumatları</h3>
+      <div class="form-group"><label>Ad</label><input id="rName" placeholder="Restoran adı"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Ünvan</label><input id="rAddress" placeholder="Şəhər, küçə"></div>
+        <div class="form-group"><label>Telefon</label><input id="rPhone" placeholder="+994 ..."></div>
+      </div>
+      <div class="form-group">
+        <label>Logo</label>
+        <input type="file" id="rLogoFile" accept="image/*" onchange="previewImg(this,'rLogoPreview')">
+        <img id="rLogoPreview" class="img-preview">
+      </div>
+      <button class="btn btn-primary" onclick="saveRestaurant()">Yadda Saxla</button>
+      <div id="rMsg" class="msg"></div>
+    </div>
+    <div class="admin-section">
+      <h3>📂 Kateqoriyalar</h3>
+      <div style="display:flex;gap:8px;">
+        <input id="newCatName" placeholder="Kateqoriya adı" style="flex:1;">
+        <button class="btn btn-primary" onclick="addCategory()">Əlavə et</button>
+      </div>
+      <div class="cats-list" id="catsList"></div>
+    </div>
+    <div class="admin-section">
+      <h3>➕ Yemək Əlavə Et</h3>
+      <div class="form-group"><label>Ad *</label><input id="iName" placeholder="Yemək adı"></div>
+      <div class="form-group"><label>Təsvir</label><textarea id="iDesc" placeholder="Qısa açıqlama..."></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Qiymət (AZN)</label><input id="iPrice" type="number" step="0.1" placeholder="0.00"></div>
+        <div class="form-group"><label>Kateqoriya</label><select id="iCat"><option value="">— Seç —</option></select></div>
+      </div>
+      <div class="form-group">
+        <label>Şəkil</label>
+        <input type="file" id="iImgFile" accept="image/*" onchange="previewImg(this,'iImgPreview')">
+        <img id="iImgPreview" class="img-preview">
+      </div>
+      <div class="checkbox-row form-group">
+        <label><input type="checkbox" id="iNew"> 🆕 Yeni</label>
+        <label><input type="checkbox" id="iPop"> 🔥 Populyar</label>
+      </div>
+      <button class="btn btn-primary" onclick="addItem()">Yeməyi Əlavə Et</button>
+      <div id="iMsg" class="msg"></div>
+    </div>
+    <div class="admin-section">
+      <h3>📋 Mövcud Yeməklər</h3>
+      <div class="items-list" id="adminItemsList"><div class="loading">Yüklənir...</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="loginModal">
+  <div class="modal">
+    <h3>🔐 Admin Girişi</h3>
+    <input type="password" id="loginPass" placeholder="Şifrənizi daxil edin" onkeydown="if(event.key==='Enter')doLogin()">
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="doLogin()">Giriş</button>
+      <button class="btn" style="background:var(--surface);color:var(--text);flex:1;" onclick="document.getElementById('loginModal').classList.remove('open')">Ləğv et</button>
+    </div>
+    <div id="loginMsg" class="msg"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://euoekxlrziblgqvgfjbo.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1b2VreGxyemlibGdxdmdmamJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyODAyMzgsImV4cCI6MjA4OTg1NjIzOH0.aKOT0WXsP0_ki6r8fqMWpuEvKlP1QikdUj5TgPuhd0g';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const RESTO_SLUG = 'baku-lezzet';
+const RESTO_DEFAULT = { name: 'Bakı Ləzzət', address: 'Xətai r., Bakı', phone: '+994 70 444 55 66', password: 'lezzet2024' };
+
+let currentResto = null, allCategories = [], allItems = [];
+
+function showPage(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
+function showMsg(id,text,type='success') { const el=document.getElementById(id); el.textContent=text; el.className='msg '+type; el.style.display='block'; setTimeout(()=>el.style.display='none',3500); }
+function previewImg(input,pid) { const f=input.files[0]; if(!f) return; const r=new FileReader(); r.onload=e=>{const i=document.getElementById(pid);i.src=e.target.result;i.style.display='block';}; r.readAsDataURL(f); }
+async function uploadImage(file,path) { const {error}=await sb.storage.from('menu-images').upload(path,file,{upsert:true}); if(error) throw error; return sb.storage.from('menu-images').getPublicUrl(path).data.publicUrl; }
+
+async function initResto() {
+  let { data } = await sb.from('restaurants').select('*').eq('slug', RESTO_SLUG).single();
+  if (!data) {
+    const { data: newR } = await sb.from('restaurants').insert({...RESTO_DEFAULT, slug: RESTO_SLUG}).select().single();
+    data = newR;
+  }
+  currentResto = data;
+  document.getElementById('menuName').textContent = data.name;
+  document.getElementById('menuAddress').textContent = data.address || data.phone || '';
+  if (data.logo_url) document.getElementById('menuLogoWrap').innerHTML = `<img class="menu-logo" src="${data.logo_url}">`;
+  const {data:cats} = await sb.from('categories').select('*').eq('restaurant_id',data.id).order('order_num');
+  const {data:items} = await sb.from('menu_items').select('*').eq('restaurant_id',data.id).order('order_num');
+  allCategories = cats||[]; allItems = items||[];
+  renderMenu(allCategories, allItems);
+}
+
+function renderMenu(cats, items) {
+  const tabs = document.getElementById('catTabs');
+  tabs.innerHTML = `<button class="cat-tab active" onclick="filterCat('all',this)">Hamısı</button>` +
+    cats.map(c=>`<button class="cat-tab" onclick="filterCat('${c.id}',this)">${c.name}</button>`).join('');
+  const content = document.getElementById('menuItems');
+  if (!items.length) { content.innerHTML='<div class="empty">Hələ yemək əlavə edilməyib.</div>'; return; }
+  const grouped = {};
+  cats.forEach(c=>grouped[c.id]={name:c.name,items:[]});
+  grouped['']={name:'Digər',items:[]};
+  items.forEach(item=>{ const k=item.category_id&&grouped[item.category_id]?item.category_id:''; grouped[k].items.push(item); });
+  content.innerHTML = Object.entries(grouped).filter(([,g])=>g.items.length).map(([,g])=>`
+    <div class="cat-section"><h3>${g.name}</h3>
+    ${g.items.map(item=>`<div class="item-card">
+      <div class="item-img">${item.image_url?`<img src="${item.image_url}" alt="${item.name}">`:'🍽'}</div>
+      <div class="item-info">
+        <div class="item-name">${item.name}</div>
+        ${item.description?`<div class="item-desc">${item.description}</div>`:''}
+        <div class="item-footer">
+          <span class="item-price">${item.price?item.price+' ₼':''}</span>
+          <span>${item.is_new?'<span class="badge badge-new">YENİ</span>':''}${item.is_popular?'<span class="badge badge-pop">🔥 Populyar</span>':''}</span>
+        </div>
+      </div></div>`).join('')}
+    </div>`).join('');
+}
+
+function filterCat(catId,btn) {
+  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active');
+  if(catId==='all'){renderMenu(allCategories,allItems);return;}
+  renderMenu(allCategories.filter(c=>c.id===catId), allItems.filter(i=>i.category_id===catId));
+}
+function goMenu() { showPage('menu'); }
+function openLoginModal() { document.getElementById('loginModal').classList.add('open'); document.getElementById('loginPass').value=''; }
+async function doLogin() {
+  const pass = document.getElementById('loginPass').value;
+  if (pass===currentResto.password) { document.getElementById('loginModal').classList.remove('open'); openAdmin(); }
+  else showMsg('loginMsg','Şifrə yanlışdır!','error');
+}
+async function openAdmin() {
+  showPage('admin');
+  document.getElementById('adminTitle').textContent = currentResto.name+' — Admin';
+  document.getElementById('rName').value = currentResto.name||'';
+  document.getElementById('rAddress').value = currentResto.address||'';
+  document.getElementById('rPhone').value = currentResto.phone||'';
+  if(currentResto.logo_url){const p=document.getElementById('rLogoPreview');p.src=currentResto.logo_url;p.style.display='block';}
+  await loadAdminCats(); await loadAdminItems();
+}
+async function loadAdminCats() {
+  const {data}=await sb.from('categories').select('*').eq('restaurant_id',currentResto.id).order('order_num');
+  allCategories=data||[];
+  document.getElementById('catsList').innerHTML=allCategories.map(c=>`<div class="cat-chip">${c.name}<button onclick="deleteCategory('${c.id}')">×</button></div>`).join('');
+  document.getElementById('iCat').innerHTML='<option value="">— Seç —</option>'+allCategories.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+}
+async function addCategory() {
+  const name=document.getElementById('newCatName').value.trim(); if(!name) return;
+  await sb.from('categories').insert({restaurant_id:currentResto.id,name,order_num:allCategories.length});
+  document.getElementById('newCatName').value=''; await loadAdminCats();
+}
+async function deleteCategory(id) { if(!confirm('Silmək istəyirsiniz?')) return; await sb.from('categories').delete().eq('id',id); await loadAdminCats(); }
+async function loadAdminItems() {
+  const {data}=await sb.from('menu_items').select('*').eq('restaurant_id',currentResto.id).order('created_at',{ascending:false});
+  allItems=data||[];
+  const list=document.getElementById('adminItemsList');
+  if(!allItems.length){list.innerHTML='<div class="empty">Hələ yemək əlavə edilməyib.</div>';return;}
+  list.innerHTML=allItems.map(item=>`<div class="admin-item">
+    <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;background:var(--border);flex-shrink:0;">
+      ${item.image_url?`<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;">`:'🍽'}
+    </div>
+    <div class="admin-item-info"><strong>${item.name}</strong><span>${item.price?item.price+'₼':''}</span></div>
+    <button class="btn btn-danger btn-sm" onclick="deleteItem('${item.id}')">Sil</button>
+  </div>`).join('');
+}
+async function saveRestaurant() {
+  const name=document.getElementById('rName').value.trim();
+  const address=document.getElementById('rAddress').value.trim();
+  const phone=document.getElementById('rPhone').value.trim();
+  let logo_url=currentResto.logo_url;
+  const file=document.getElementById('rLogoFile').files[0];
+  if(file){try{logo_url=await uploadImage(file,`logos/${currentResto.id}/logo`);}catch(e){showMsg('rMsg','Şəkil yüklənmədi!','error');return;}}
+  await sb.from('restaurants').update({name,address,phone,logo_url}).eq('id',currentResto.id);
+  currentResto={...currentResto,name,address,phone,logo_url};
+  showMsg('rMsg','Yadda saxlandı ✅');
+}
+async function addItem() {
+  const name=document.getElementById('iName').value.trim();
+  const price=parseFloat(document.getElementById('iPrice').value)||null;
+  const desc=document.getElementById('iDesc').value.trim();
+  const cat=document.getElementById('iCat').value||null;
+  const isNew=document.getElementById('iNew').checked;
+  const isPop=document.getElementById('iPop').checked;
+  if(!name){showMsg('iMsg','Yemək adı mütləqdir!','error');return;}
+  let image_url=null;
+  const file=document.getElementById('iImgFile').files[0];
+  if(file){try{image_url=await uploadImage(file,`items/${currentResto.id}/${Date.now()}_${file.name}`);}catch(e){showMsg('iMsg','Şəkil yüklənmədi!','error');return;}}
+  const {error}=await sb.from('menu_items').insert({restaurant_id:currentResto.id,category_id:cat,name,description:desc,price,image_url,is_new:isNew,is_popular:isPop,order_num:allItems.length});
+  if(error){showMsg('iMsg',error.message,'error');return;}
+  showMsg('iMsg','Yemək əlavə edildi ✅');
+  ['iName','iDesc','iPrice'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('iImgFile').value=''; document.getElementById('iImgPreview').style.display='none';
+  document.getElementById('iNew').checked=false; document.getElementById('iPop').checked=false;
+  await loadAdminItems();
+}
+async function deleteItem(id) { if(!confirm('Silmək istəyirsiniz?')) return; await sb.from('menu_items').delete().eq('id',id); await loadAdminItems(); }
+
+initResto();
+</script>
+</body>
+</html>
